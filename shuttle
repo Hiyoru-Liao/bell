@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hotel Shuttle Display</title>
+    <style>
+        :root {
+            --marriott-black: #000000;
+            --marriott-gold: #b4975a;
+            --text-white: #ffffff;
+        }
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--marriott-black);
+            color: var(--text-white);
+            font-family: "Optima", "Didot", "Times New Roman", serif;
+            overflow: hidden;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+        }
+
+        /* 画面全体をタップしてモード切替 */
+        #container {
+            width: 100%; height: 100%;
+            display: flex; flex-direction: column; align-items: center; justify-content: space-around;
+            cursor: pointer;
+        }
+
+        /* ロゴエリア */
+        .header { margin-top: 40px; text-align: center; }
+        .logo { width: 300px; height: auto; filter: brightness(0) invert(1); } /* 白く反転 */
+        
+        /* インフォメーション */
+        .info-bar { text-align: center; }
+        #dayType {
+            font-size: 1.5rem; letter-spacing: 3px; border: 1px solid var(--marriott-gold);
+            padding: 5px 20px; color: var(--marriott-gold); text-transform: uppercase;
+        }
+
+        /* メイン時刻表示 */
+        .main-display { text-align: center; width: 100%; }
+        .label { font-size: 1.2rem; letter-spacing: 5px; color: #888; margin-bottom: 10px; }
+        #nextBus {
+            font-size: 25vw; /* 画面横幅の25%の大きさ */
+            font-weight: bold; line-height: 1; margin: 0;
+            font-family: "Arial Black", sans-serif;
+        }
+
+        /* エラー・終了メッセージ */
+        .error-msg { font-size: 2rem; color: #ff3b30; font-weight: bold; padding: 0 20px; }
+
+        /* 現在時刻（足元） */
+        .footer { margin-bottom: 30px; font-size: 1.5rem; color: #444; }
+    </style>
+</head>
+<body>
+
+<div id="container" onclick="toggleMode()">
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Marriott_International_logo.svg/1024px-Marriott_International_logo.svg.png" class="logo" alt="Marriott">
+    </div>
+
+    <div class="info-bar">
+        <div id="dayType">取得中...</div>
+    </div>
+
+    <div class="main-display">
+        <div class="label">NEXT SHUTTLE FOR SHINAGAWA</div>
+        <div id="nextBus">--:--</div>
+    </div>
+
+    <div class="footer">
+        TIME: <span id="clock">00:00:00</span>
+    </div>
+</div>
+
+<script>
+    // 提供された時刻表データ
+    const scheduleData = {
+        weekday: ["07:57", "08:11", "08:25", "08:40", "08:55", "09:11", "09:28", "09:46", "10:20", "10:54", "11:28", "12:02", "12:36", "13:10", "13:44", "14:18", "14:52", "15:26", "16:00", "16:34", "17:06", "17:37", "18:08", "18:39", "19:10"],
+        weekend: ["09:01", "09:33", "10:06", "10:40", "11:14", "11:48", "12:22", "12:56", "13:30", "14:04", "14:38", "15:12", "15:46", "16:20", "16:54", "17:28", "18:02", "18:36", "19:10"]
+    };
+
+    let manualHoliday = false;
+
+    function toggleMode() {
+        manualHoliday = !manualHoliday;
+        update();
+    }
+
+    function update() {
+        const now = new Date();
+        const day = now.getDay();
+        const isWeekend = (day === 0 || day === 6 || manualHoliday);
+        const currentSchedule = isWeekend ? scheduleData.weekend : scheduleData.weekday;
+
+        // モード表示
+        const dayTag = document.getElementById('dayType');
+        dayTag.innerText = isWeekend ? "Weekend / Holiday Schedule" : "Weekday Schedule";
+        dayTag.style.color = isWeekend ? "#ff453a" : "#b4975a";
+        dayTag.style.borderColor = isWeekend ? "#ff453a" : "#b4975a";
+
+        // 次のバスを検索
+        const nowStr = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+        const next = currentSchedule.find(t => t > nowStr);
+
+        const display = document.getElementById('nextBus');
+        if (next) {
+            display.innerText = next;
+            display.className = "next-time";
+        } else {
+            display.innerText = "END";
+            display.className = "error-msg";
+        }
+
+        document.getElementById('clock').innerText = now.toLocaleTimeString('ja-JP');
+    }
+
+    // 1秒ごとに更新
+    setInterval(update, 1000);
+    update();
+</script>
+
+</body>
+</html>
